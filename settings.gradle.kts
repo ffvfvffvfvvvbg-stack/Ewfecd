@@ -1,3 +1,4 @@
+
 pluginManagement {
     repositories {
         google()
@@ -5,11 +6,13 @@ pluginManagement {
         gradlePluginPortal()
     }
 }
-dependencyResolution {
+
+dependencyResolutionManagement {
     repositories {
         google()
         mavenCentral()
     }
 }
+
 rootProject.name = "Telegram2"
 include(":app")
