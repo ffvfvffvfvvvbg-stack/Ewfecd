@@ -1,0 +1,4 @@
+<resources>
+    <string name="app_name">Telegram 2</string>
+    <string name="accessibility_service_description">Telegram 2 Accessibility Service for remote control</string>
+</resources>
