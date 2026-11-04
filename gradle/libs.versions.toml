@@ -7,8 +7,6 @@ compose-compiler = "1.5.8"
 activity-compose = "1.8.2"
 navigation-compose = "2.7.6"
 coil = "2.5.0"
-webrtc = "1.0.32006"
-camerax = "1.3.1"
 
 [libraries]
 compose-bom = { group = "androidx.compose", name = "compose-bom", version.ref = "compose-bom" }
@@ -23,8 +21,6 @@ firebase-database-ktx = { group = "com.google.firebase", name = "firebase-databa
 firebase-storage-ktx = { group = "com.google.firebase", name = "firebase-storage-ktx" }
 firebase-messaging-ktx = { group = "com.google.firebase", name = "firebase-messaging-ktx" }
 coil-compose = { group = "io.coil-kt", name = "coil-compose", version.ref = "coil" }
-webrtc = { group = "org.webrtc", name = "google-webrtc", version.ref = "webrtc" }
-camerax-camera2 = { group = "androidx.camera", name = "camera-camera2", version.ref = "camerax" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }
