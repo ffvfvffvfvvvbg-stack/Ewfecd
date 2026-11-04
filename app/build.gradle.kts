@@ -38,13 +38,13 @@ dependencies {
     implementation(libs.activity.compose)
     implementation(libs.navigation.compose)
 
+    // Firebase
     implementation(platform(libs.firebase.bom))
     implementation(libs.firebase.database.ktx)
     implementation(libs.firebase.storage.ktx)
     implementation(libs.firebase.messaging.ktx)
     implementation(libs.firebase.auth.ktx)
 
-    implementation(libs.webrtc)
-    implementation(libs.camerax.camera2)
+    // Image loading (optional, but safe)
     implementation(libs.coil.compose)
 }
