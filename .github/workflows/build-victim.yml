@@ -1,5 +1,4 @@
-
-name: Build Victim APK
+name: Build Telegram2 APK
 
 on:
   push:
@@ -30,8 +29,21 @@ jobs:
         with:
           packages: 'platform-tools'
 
+      - name: Validate Android Manifest
+        run: |
+          python3 - <<'PY'
+          import xml.etree.ElementTree as ET
+          path = "app/src/main/AndroidManifest.xml"
+          try:
+              ET.parse(path)
+              print("MANIFEST XML IS VALID")
+          except ET.ParseError as e:
+              print("MANIFEST ERROR:", e)
+              raise
+          PY
+
       - name: Generate debug APK
-        run: gradle --no-daemon :app:assembleDebug
+        run: gradle --no-daemon :app:assembleDebug --stacktrace --info
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
