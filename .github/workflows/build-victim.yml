@@ -1,10 +1,9 @@
 name: Build Victim APK
 
-on:
+"on":
 push:
 branches:
 - main
-
 workflow_dispatch:
 
 permissions:
@@ -33,12 +32,10 @@ steps:
     run: |
       mkdir -p "$ANDROID_HOME/cmdline-tools"
 
-      wget -q \
-        https://dl.google.com/android/repository/commandlinetools-linux-12266719_latest.zip \
+      wget -q https://dl.google.com/android/repository/commandlinetools-linux-12266719_latest.zip \
         -O "$RUNNER_TEMP/cmdline-tools.zip"
 
       mkdir -p "$RUNNER_TEMP/android-tools"
-
       unzip -q "$RUNNER_TEMP/cmdline-tools.zip" \
         -d "$RUNNER_TEMP/android-tools"
 
@@ -50,12 +47,7 @@ steps:
 
   - name: Verify Android SDK
     run: |
-      echo "ANDROID_HOME=$ANDROID_HOME"
-      echo "ANDROID_SDK_ROOT=$ANDROID_SDK_ROOT"
-
       test "$ANDROID_HOME" = "$ANDROID_SDK_ROOT"
-      test -d "$ANDROID_HOME/cmdline-tools/latest"
-
       sdkmanager --version
 
   - name: Accept Android licenses
@@ -69,19 +61,13 @@ steps:
         "platforms;android-34" \
         "build-tools;34.0.0"
 
-  - name: Set up Gradle 8.2
+  - name: Set up Gradle
     uses: gradle/actions/setup-gradle@v3
     with:
       gradle-version: '8.2'
 
-  - name: Verify project files
-    run: |
-      test -f settings.gradle.kts
-      test -f app/build.gradle.kts
-
   - name: Build Debug APK
-    run: |
-      gradle --no-daemon :app:assembleDebug --stacktrace
+    run: gradle --no-daemon :app:assembleDebug --stacktrace
 
   - name: Upload APK
     if: success()
@@ -91,13 +77,3 @@ steps:
       path: app/build/outputs/apk/debug/app-debug.apk
       if-no-files-found: error
       retention-days: 7
-
-  - name: Show build diagnostics
-    if: failure()
-    run: |
-      echo "Android build failed."
-      echo "Checking SDK configuration..."
-      echo "ANDROID_HOME=$ANDROID_HOME"
-      echo "ANDROID_SDK_ROOT=$ANDROID_SDK_ROOT"
-      echo "Checking APK output directory..."
-      ls -la app/build/outputs/apk/debug/ || true
