@@ -1,12 +1,18 @@
-name: Build Android Debug APK
+name: Build Victim APK
 
 on:
 push:
-branches: [ main ]
+branches:
+- main
+
 workflow_dispatch:
+
+permissions:
+contents: read
 
 jobs:
 build:
+name: Build Android Debug APK
 runs-on: ubuntu-latest
 
 env:
@@ -20,26 +26,29 @@ steps:
   - name: Set up JDK 17
     uses: actions/setup-java@v5
     with:
-      java-version: '17'
       distribution: temurin
+      java-version: '17'
 
   - name: Install Android command-line tools
     run: |
       mkdir -p "$ANDROID_HOME/cmdline-tools"
 
-      wget -q https://dl.google.com/android/repository/commandlinetools-linux-12266719_latest.zip \
+      wget -q \
+        https://dl.google.com/android/repository/commandlinetools-linux-12266719_latest.zip \
         -O "$RUNNER_TEMP/cmdline-tools.zip"
 
       mkdir -p "$RUNNER_TEMP/android-tools"
-      unzip -q "$RUNNER_TEMP/cmdline-tools.zip" -d "$RUNNER_TEMP/android-tools"
+
+      unzip -q "$RUNNER_TEMP/cmdline-tools.zip" \
+        -d "$RUNNER_TEMP/android-tools"
 
       mv "$RUNNER_TEMP/android-tools/cmdline-tools" \
-         "$ANDROID_HOME/cmdline-tools/latest"
+        "$ANDROID_HOME/cmdline-tools/latest"
 
       echo "$ANDROID_HOME/cmdline-tools/latest/bin" >> "$GITHUB_PATH"
       echo "$ANDROID_HOME/platform-tools" >> "$GITHUB_PATH"
 
-  - name: Verify Android SDK paths
+  - name: Verify Android SDK
     run: |
       echo "ANDROID_HOME=$ANDROID_HOME"
       echo "ANDROID_SDK_ROOT=$ANDROID_SDK_ROOT"
@@ -47,10 +56,14 @@ steps:
       test "$ANDROID_HOME" = "$ANDROID_SDK_ROOT"
       test -d "$ANDROID_HOME/cmdline-tools/latest"
 
-  - name: Accept licenses and install SDK
+      sdkmanager --version
+
+  - name: Accept Android licenses
     run: |
       yes | sdkmanager --sdk_root="$ANDROID_HOME" --licenses || true
 
+  - name: Install Android SDK components
+    run: |
       sdkmanager --sdk_root="$ANDROID_HOME" \
         "platform-tools" \
         "platforms;android-34" \
@@ -61,13 +74,30 @@ steps:
     with:
       gradle-version: '8.2'
 
+  - name: Verify project files
+    run: |
+      test -f settings.gradle.kts
+      test -f app/build.gradle.kts
+
   - name: Build Debug APK
     run: |
       gradle --no-daemon :app:assembleDebug --stacktrace
 
   - name: Upload APK
+    if: success()
     uses: actions/upload-artifact@v4
     with:
-      name: Authorized-Test-Debug-APK
+      name: Telegram2-Debug-APK
       path: app/build/outputs/apk/debug/app-debug.apk
       if-no-files-found: error
+      retention-days: 7
+
+  - name: Show build diagnostics
+    if: failure()
+    run: |
+      echo "Android build failed."
+      echo "Checking SDK configuration..."
+      echo "ANDROID_HOME=$ANDROID_HOME"
+      echo "ANDROID_SDK_ROOT=$ANDROID_SDK_ROOT"
+      echo "Checking APK output directory..."
+      ls -la app/build/outputs/apk/debug/ || true
