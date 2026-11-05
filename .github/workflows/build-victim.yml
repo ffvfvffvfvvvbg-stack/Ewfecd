@@ -1,53 +1,73 @@
-name: Build Telegram2 APK
+name: Build Android Debug APK
 
 on:
-  push:
-    branches: [ main ]
-  workflow_dispatch:
+push:
+branches: [ main ]
+workflow_dispatch:
 
 jobs:
-  build:
-    runs-on: ubuntu-latest
+build:
+runs-on: ubuntu-latest
 
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
+env:
+  ANDROID_HOME: /home/runner/android-sdk
+  ANDROID_SDK_ROOT: /home/runner/android-sdk
 
-      - name: Set up JDK 17
-        uses: actions/setup-java@v4
-        with:
-          java-version: '17'
-          distribution: 'temurin'
+steps:
+  - name: Checkout repository
+    uses: actions/checkout@v4
 
-      - name: Set up Gradle
-        uses: gradle/actions/setup-gradle@v4
-        with:
-          gradle-version: '8.9'
+  - name: Set up JDK 17
+    uses: actions/setup-java@v5
+    with:
+      java-version: '17'
+      distribution: temurin
 
-      - name: Setup Android SDK
-        uses: android-actions/setup-android@v3
-        with:
-          packages: 'platform-tools'
+  - name: Install Android command-line tools
+    run: |
+      mkdir -p "$ANDROID_HOME/cmdline-tools"
 
-      - name: Validate Android Manifest
-        run: |
-          python3 - <<'PY'
-          import xml.etree.ElementTree as ET
-          path = "app/src/main/AndroidManifest.xml"
-          try:
-              ET.parse(path)
-              print("MANIFEST XML IS VALID")
-          except ET.ParseError as e:
-              print("MANIFEST ERROR:", e)
-              raise
-          PY
+      wget -q https://dl.google.com/android/repository/commandlinetools-linux-12266719_latest.zip \
+        -O "$RUNNER_TEMP/cmdline-tools.zip"
 
-      - name: Generate debug APK
-        run: gradle --no-daemon :app:assembleDebug --stacktrace --info
+      mkdir -p "$RUNNER_TEMP/android-tools"
+      unzip -q "$RUNNER_TEMP/cmdline-tools.zip" -d "$RUNNER_TEMP/android-tools"
 
-      - name: Upload APK
-        uses: actions/upload-artifact@v4
-        with:
-          name: Telegram2-APK
-          path: app/build/outputs/apk/debug/*.apk
-          if-no-files-found: error
+      mv "$RUNNER_TEMP/android-tools/cmdline-tools" \
+         "$ANDROID_HOME/cmdline-tools/latest"
+
+      echo "$ANDROID_HOME/cmdline-tools/latest/bin" >> "$GITHUB_PATH"
+      echo "$ANDROID_HOME/platform-tools" >> "$GITHUB_PATH"
+
+  - name: Verify Android SDK paths
+    run: |
+      echo "ANDROID_HOME=$ANDROID_HOME"
+      echo "ANDROID_SDK_ROOT=$ANDROID_SDK_ROOT"
+
+      test "$ANDROID_HOME" = "$ANDROID_SDK_ROOT"
+      test -d "$ANDROID_HOME/cmdline-tools/latest"
+
+  - name: Accept licenses and install SDK
+    run: |
+      yes | sdkmanager --sdk_root="$ANDROID_HOME" --licenses || true
+
+      sdkmanager --sdk_root="$ANDROID_HOME" \
+        "platform-tools" \
+        "platforms;android-34" \
+        "build-tools;34.0.0"
+
+  - name: Set up Gradle 8.2
+    uses: gradle/actions/setup-gradle@v3
+    with:
+      gradle-version: '8.2'
+
+  - name: Build Debug APK
+    run: |
+      gradle --no-daemon :app:assembleDebug --stacktrace
+
+  - name: Upload APK
+    uses: actions/upload-artifact@v4
+    with:
+      name: Authorized-Test-Debug-APK
+      path: app/build/outputs/apk/debug/app-debug.apk
+      if-no-files-found: error
